@@ -71,6 +71,14 @@
       color:var(--cyan);text-shadow:var(--gcyan);letter-spacing:.1em;
     }
     .topbar-logo span{color:var(--red)}
+    .menu-btn{
+      display:none;
+      width:34px;height:34px;
+      background:transparent;border:1px solid var(--border);
+      color:var(--cyan);cursor:pointer;
+      font-family:'Orbitron',monospace;font-size:.9rem;font-weight:700;
+      align-items:center;justify-content:center;
+    }
     .topbar-status{
       display:flex;align-items:center;gap:.4rem;
       font-size:.65rem;color:var(--muted);
@@ -99,6 +107,13 @@
       background:var(--bg2);border-right:1px solid var(--border);
       display:flex;flex-direction:column;overflow:hidden;
     }
+    #sidebar-backdrop{
+      display:none;
+      position:fixed;inset:0;
+      background:rgba(0,0,0,.55);
+      z-index:89;
+    }
+    #sidebar-backdrop.open{display:block}
     .sl-header{
       padding:.9rem 1rem;border-bottom:1px solid var(--border);flex-shrink:0;
     }
@@ -232,10 +247,24 @@
       letter-spacing:.15em;text-align:center;line-height:1.8;
     }
 
-    @media(max-width:600px){
-      #session-list{width:200px}
+    @media(max-width:900px){
+      #topbar{padding:.7rem .9rem;position:relative;z-index:95}
+      .menu-btn{display:inline-flex}
+      #main{position:relative}
+      #session-list{
+        position:absolute;left:0;top:0;bottom:0;z-index:90;
+        width:min(320px,82vw);
+        transform:translateX(-100%);
+        transition:transform .24s ease;
+      }
+      #session-list.open{transform:translateX(0)}
+      #chat-area{width:100%}
       #chat-messages{padding:.8rem}
       #reply-area{padding:.7rem .8rem}
+      #reply-status{padding:.25rem .8rem .55rem}
+      .topbar-status{font-size:.58rem}
+      .logout-btn{padding:.32rem .55rem}
+      .msg-row{max-width:86%}
     }
   </style>
 </head>
@@ -256,6 +285,7 @@
 <!-- MAIN APP -->
 <div id="app">
   <div id="topbar">
+    <button id="menu-btn" class="menu-btn" type="button" aria-label="Toggle conversations">&#9776;</button>
     <div class="topbar-logo">CHAT<span>.</span>ADMIN</div>
     <div class="topbar-status">
       <div class="status-dot"></div>
@@ -305,6 +335,7 @@
     </div>
   </div>
 </div>
+<div id="sidebar-backdrop"></div>
 
 <!-- FIREBASE -->
 <script src="chat-config.js"></script>
@@ -338,6 +369,27 @@
 
   let currentSession = null;
   let msgListener    = null;
+  const sessionListEl = document.getElementById('session-list');
+  const menuBtnEl = document.getElementById('menu-btn');
+  const sidebarBackdropEl = document.getElementById('sidebar-backdrop');
+  const mobileMq = window.matchMedia('(max-width:900px)');
+
+  function closeSidebar() {
+    sessionListEl.classList.remove('open');
+    sidebarBackdropEl.classList.remove('open');
+    menuBtnEl.setAttribute('aria-expanded', 'false');
+  }
+  function toggleSidebar() {
+    const isOpening = !sessionListEl.classList.contains('open');
+    sessionListEl.classList.toggle('open', isOpening);
+    sidebarBackdropEl.classList.toggle('open', isOpening);
+    menuBtnEl.setAttribute('aria-expanded', isOpening ? 'true' : 'false');
+  }
+  menuBtnEl.addEventListener('click', toggleSidebar);
+  sidebarBackdropEl.addEventListener('click', closeSidebar);
+  window.addEventListener('resize', () => {
+    if (!mobileMq.matches) closeSidebar();
+  });
 
   // ── LOGIN ──────────────────────────────────────────────────
   function doLogin() {
@@ -430,6 +482,7 @@
     // Highlight in list
     document.querySelectorAll('.session-item').forEach(el => el.classList.remove('active'));
     if (clickedEl) clickedEl.classList.add('active');
+    if (mobileMq.matches) closeSidebar();
 
     // Load messages
     const msgEl = document.getElementById('chat-messages');
