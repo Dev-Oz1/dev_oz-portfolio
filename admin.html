@@ -72,7 +72,7 @@
     }
     .topbar-logo span{color:var(--red)}
     .menu-btn{
-      display:none;
+      display:inline-flex;
       width:34px;height:34px;
       background:transparent;border:1px solid var(--border);
       color:var(--cyan);cursor:pointer;
@@ -416,6 +416,11 @@
       if (user) {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('app').classList.add('visible');
+        if (mobileMq.matches) {
+          sessionListEl.classList.add('open');
+          sidebarBackdropEl.classList.add('open');
+          menuBtnEl.setAttribute('aria-expanded', 'true');
+        }
         loadSessions();
       } else {
         document.getElementById('login-screen').style.display = 'flex';
@@ -458,6 +463,12 @@
         `;
         container.appendChild(div);
       });
+
+      if (!currentSession && sessions.length) {
+        const first = sessions[0];
+        const firstEl = container.querySelector('.session-item');
+        openSession(first.id, first.visitorName || 'Visitor', firstEl);
+      }
     }, err => {
       document.getElementById('sl-count').textContent = 'Permission error';
       document.getElementById('sessions').innerHTML = '<div class="no-sessions">Cannot read chats.<br/>Check Firebase Realtime Database rules.</div>';
