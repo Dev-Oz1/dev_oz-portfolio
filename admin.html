@@ -212,6 +212,13 @@
     #reply-send:hover{opacity:.85;box-shadow:var(--gred)}
     #reply-send:disabled{opacity:.3;cursor:not-allowed}
     #reply-send svg{width:16px;height:16px;fill:#fff}
+    #reply-status{
+      min-height:1.1rem;padding:.3rem 1.5rem .6rem;
+      font-family:'Orbitron',monospace;font-size:.58rem;letter-spacing:.08em;
+      color:var(--muted);background:var(--bg2);border-top:1px solid rgba(0,229,255,.08);
+    }
+    #reply-status.ok{color:var(--green)}
+    #reply-status.err{color:var(--red)}
 
     /* EMPTY STATE */
     #empty-state{
@@ -293,6 +300,7 @@
             <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
           </button>
         </div>
+        <div id="reply-status"></div>
       </div>
     </div>
   </div>
@@ -398,6 +406,10 @@
         `;
         container.appendChild(div);
       });
+    }, err => {
+      document.getElementById('sl-count').textContent = 'Permission error';
+      document.getElementById('sessions').innerHTML = '<div class="no-sessions">Cannot read chats.<br/>Check Firebase Realtime Database rules.</div>';
+      document.getElementById('login-error').textContent = '// DATABASE ERROR: ' + err.message;
     });
   }
 
@@ -443,6 +455,13 @@
   // ── REPLY ──────────────────────────────────────────────────
   const replyText = document.getElementById('reply-text');
   const replySend = document.getElementById('reply-send');
+  const replyStatus = document.getElementById('reply-status');
+
+  function setReplyStatus(text, type) {
+    replyStatus.className = '';
+    if (type) replyStatus.classList.add(type);
+    replyStatus.textContent = text || '';
+  }
 
   replyText.addEventListener('input', () => {
     replySend.disabled = replyText.value.trim() === '';
@@ -465,17 +484,27 @@
 
   replySend.addEventListener('click', sendReply);
 
-  function sendReply() {
+  async function sendReply() {
     const text = replyText.value.trim();
     if (!text || !currentSession) return;
-    db.ref(`chats/${currentSession}/messages`).push({
-      text, sender: 'owner', name: ADMIN_NAME, ts: Date.now()
-    });
-    db.ref(`chats/${currentSession}/meta`).update({
-      lastMsg: text, lastTs: Date.now(), unreadOwner: false
-    });
-    db.ref(`chats/${currentSession}/ownerTyping`).set(false);
-    replyText.value = ''; replyText.style.height = 'auto';
+    setReplyStatus('Sending reply...');
+    replySend.disabled = true;
+    try {
+      await db.ref(`chats/${currentSession}/messages`).push({
+        text, sender: 'owner', name: ADMIN_NAME, ts: Date.now()
+      });
+      await db.ref(`chats/${currentSession}/meta`).update({
+        lastMsg: text, lastTs: Date.now(), unreadOwner: false
+      });
+      await db.ref(`chats/${currentSession}/ownerTyping`).set(false);
+      replyText.value = '';
+      replyText.style.height = 'auto';
+      setReplyStatus('Reply sent successfully.', 'ok');
+    } catch (e) {
+      setReplyStatus('Send failed: ' + (e && e.message ? e.message : 'unknown error'), 'err');
+      replySend.disabled = false;
+      return;
+    }
     replySend.disabled = true;
   }
 
