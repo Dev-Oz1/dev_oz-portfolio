@@ -210,6 +210,9 @@
     .contact-input::placeholder{color:var(--muted)}
     .contact-input:focus{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,229,255,.1)}
     textarea.contact-input{min-height:120px;resize:vertical}
+    .form-status{font-family:'Orbitron',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;margin-top:.7rem;min-height:1.2rem}
+    .form-status.ok{color:var(--green);text-shadow:var(--ggreen)}
+    .form-status.err{color:var(--red);text-shadow:var(--gred)}
     .cinfo{display:flex;align-items:center;gap:1rem;margin-bottom:1.3rem}
     .cicon{width:40px;height:40px;flex-shrink:0;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--cyan);font-size:.95rem}
     .cinfo span{font-size:.85rem;color:var(--muted)}
@@ -649,15 +652,21 @@
         </div>
       </div>
       <div class="col-lg-6 offset-lg-1 reveal">
-        <div class="row g-0">
-          <div class="col-md-6 pe-md-2"><input class="contact-input" type="text" placeholder="Your Name"/></div>
-          <div class="col-md-6 ps-md-2"><input class="contact-input" type="email" placeholder="elmuhammaden.sani@gmail.com"/></div>
-        </div>
-        <input class="contact-input" type="text" placeholder="Subject (e.g. Dev Contract / QA Role)"/>
-        <textarea class="contact-input" placeholder="Tell me about the project or role..."></textarea>
-        <button class="btn-c btn-green" style="width:100%;text-align:center;font-size:.65rem;">
-          TRANSMIT MESSAGE <i class="bi bi-send-fill ms-2"></i>
-        </button>
+        <form id="contact-form">
+          <input type="hidden" name="_subject" value="New Portfolio Contact Message"/>
+          <input type="hidden" name="_template" value="table"/>
+          <input type="text" name="_honey" style="display:none"/>
+          <div class="row g-0">
+            <div class="col-md-6 pe-md-2"><input class="contact-input" type="text" name="name" placeholder="Your Name" required/></div>
+            <div class="col-md-6 ps-md-2"><input class="contact-input" type="email" name="email" placeholder="Your Email" required/></div>
+          </div>
+          <input class="contact-input" type="text" name="subject" placeholder="Subject (e.g. Dev Contract / QA Role)" required/>
+          <textarea class="contact-input" name="message" placeholder="Tell me about the project or role..." required></textarea>
+          <button id="contact-submit" type="submit" class="btn-c btn-green" style="width:100%;text-align:center;font-size:.65rem;">
+            TRANSMIT MESSAGE <i class="bi bi-send-fill ms-2"></i>
+          </button>
+          <p id="contact-status" class="form-status" aria-live="polite"></p>
+        </form>
       </div>
     </div>
   </div>
@@ -744,6 +753,35 @@
   document.querySelectorAll('#videos iframe').forEach((frame) => {
     frame.src = toEmbedUrl(frame.src);
   });
+
+  // Contact form: send to email without a custom backend.
+  const contactForm = document.getElementById('contact-form');
+  const contactSubmit = document.getElementById('contact-submit');
+  const contactStatus = document.getElementById('contact-status');
+  if (contactForm) {
+    contactForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      contactStatus.className = 'form-status';
+      contactStatus.textContent = 'Transmitting...';
+      contactSubmit.disabled = true;
+      try {
+        const res = await fetch('https://formsubmit.co/ajax/elmuhammaden.sani@gmail.com', {
+          method: 'POST',
+          body: new FormData(contactForm),
+          headers: { Accept: 'application/json' }
+        });
+        if (!res.ok) throw new Error('send_failed');
+        contactStatus.className = 'form-status ok';
+        contactStatus.textContent = 'Message transmitted successfully';
+        contactForm.reset();
+      } catch {
+        contactStatus.className = 'form-status err';
+        contactStatus.textContent = 'Transmission failed. Please try again.';
+      } finally {
+        contactSubmit.disabled = false;
+      }
+    });
+  }
 </script>
 </body>
 </html>
