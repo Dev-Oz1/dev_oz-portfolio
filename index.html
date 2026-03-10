@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- ✏️ EDIT 1: Change "YourName" to your real name — this shows in the browser tab -->
+  <title>saniusman — Dev & Game Tester</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:      #07090f;
+      --bg2:     #0b0f18;
+      --bg3:     #0f1520;
+      --bg4:     #131b27;
+      --cyan:    #00e5ff;
+      --red:     #ff2d55;
+      --green:   #00ff88;
+      --gold:    #ffc94d;
+      --text:    #b8cfe0;
+      --muted:   #3d5266;
+      --border:  rgba(0,229,255,0.12);
+      --gcyan:   0 0 14px rgba(0,229,255,0.55), 0 0 45px rgba(0,229,255,0.18);
+      --gred:    0 0 14px rgba(255,45,85,0.6),  0 0 45px rgba(255,45,85,0.2);
+      --ggreen:  0 0 14px rgba(0,255,136,0.5),  0 0 35px rgba(0,255,136,0.15);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;cursor:none}
+
+    /* ── CURSOR ── */
+    #cur{position:fixed;width:10px;height:10px;background:var(--cyan);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);box-shadow:var(--gcyan);transition:transform .08s,background .2s}
+    #cur-ring{position:fixed;width:32px;height:32px;border:1px solid rgba(0,229,255,.45);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:all .18s ease}
+
+    /* ── CANVAS ── */
+    #bgc{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5}
+
+    /* ── SCANLINES ── */
+    body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.07) 2px,rgba(0,0,0,.07) 4px);pointer-events:none;z-index:1;opacity:.35}
+
+    /* ── NAVBAR ── */
+    .navbar{background:rgba(7,9,15,.93);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:.9rem 0;position:sticky;top:0;z-index:500}
+    .navbar-brand{font-family:'Orbitron',monospace;font-weight:900;font-size:1.1rem;color:var(--cyan)!important;text-shadow:var(--gcyan);letter-spacing:2px}
+    .navbar-brand span{color:var(--red);text-shadow:var(--gred)}
+    .nav-link{font-family:'Orbitron',monospace;font-size:.58rem;font-weight:700;color:var(--muted)!important;letter-spacing:.15em;text-transform:uppercase;margin-left:1.3rem;transition:color .2s,text-shadow .2s;position:relative}
+    .nav-link::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:1px;background:var(--cyan);transition:width .3s}
+    .nav-link:hover{color:var(--cyan)!important;text-shadow:var(--gcyan)}
+    .nav-link:hover::after{width:100%}
+
+    /* ── HERO ── */
+    #hero{min-height:100vh;display:flex;align-items:center;position:relative;overflow:hidden;padding:6rem 0 4rem;z-index:2}
+    .grid-lines{position:absolute;inset:0;background-image:linear-gradient(rgba(0,229,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.035) 1px,transparent 1px);background-size:55px 55px;animation:gp 5s ease-in-out infinite}
+    @keyframes gp{0%,100%{opacity:.5}50%{opacity:1}}
+
+    /* dual badge */
+    .dual-badge{display:inline-flex;gap:0;margin-bottom:1.2rem;animation:fadeUp .6s ease both}
+    .badge-half{font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;letter-spacing:.15em;padding:.4rem .9rem;text-transform:uppercase}
+    .badge-half.dev{background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.35);color:var(--cyan);border-right:none}
+    .badge-half.qa{background:rgba(255,45,85,.1);border:1px solid rgba(255,45,85,.35);color:var(--red);border-left:none}
+
+    .glitch{position:relative;font-family:'Orbitron',monospace;font-size:clamp(2.2rem,5.5vw,5rem);font-weight:900;color:#fff;line-height:1.04;letter-spacing:-1px;animation:fadeUp .7s ease both}
+    .glitch::before,.glitch::after{content:attr(data-text);position:absolute;top:0;left:0;width:100%;overflow:hidden}
+    .glitch::before{color:var(--red);animation:g1 4s infinite;clip-path:polygon(0 0,100% 0,100% 33%,0 33%)}
+    .glitch::after{color:var(--cyan);animation:g2 4s infinite;clip-path:polygon(0 67%,100% 67%,100% 100%,0 100%)}
+    @keyframes g1{0%,89%,100%{transform:translate(0);opacity:0}91%{transform:translate(-3px,1px);opacity:.85}93%{transform:translate(3px,-1px);opacity:.85}95%{transform:translate(0);opacity:0}}
+    @keyframes g2{0%,87%,100%{transform:translate(0);opacity:0}89%{transform:translate(3px,2px);opacity:.7}92%{transform:translate(-3px,-2px);opacity:.7}94%{transform:translate(0);opacity:0}}
+
+    .hero-roles{font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700;letter-spacing:.2em;margin-top:.9rem;animation:fadeUp .8s .1s ease both}
+    .hero-roles .r1{color:var(--cyan);text-shadow:var(--gcyan)}
+    .hero-roles .sep{color:var(--muted);margin:0 .6rem}
+    .hero-roles .r2{color:var(--red);text-shadow:var(--gred)}
+
+    /* typewriter */
+    .tw{overflow:hidden;border-right:2px solid var(--cyan);white-space:nowrap;font-family:'Orbitron',monospace;font-size:.78rem;letter-spacing:.12em;color:var(--cyan);text-shadow:var(--gcyan);animation:typing 3.8s steps(38,end) .4s both,blink .7s step-end infinite;display:inline-block;max-width:100%;margin-top:1rem}
+    @keyframes typing{from{width:0}to{width:100%}}
+    @keyframes blink{50%{border-color:transparent}}
+
+    .hero-sub{font-size:.95rem;color:var(--muted);font-weight:300;max-width:500px;line-height:1.85;margin-top:1.2rem;animation:fadeUp .8s .25s ease both}
+    .hero-btns{margin-top:2rem;animation:fadeUp .8s .35s ease both}
+
+    .btn-c{display:inline-block;font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;padding:.78rem 1.9rem;text-decoration:none;transition:all .3s;position:relative;overflow:hidden;margin-right:.8rem;margin-bottom:.5rem;background:transparent;cursor:pointer;border:none}
+    .btn-c::before{content:'';position:absolute;inset:0;transform:scaleX(0);transform-origin:left;transition:transform .3s;z-index:-1}
+    .btn-cyan{color:var(--cyan);border:1px solid var(--cyan)}
+    .btn-cyan::before{background:var(--cyan)}
+    .btn-cyan:hover{color:var(--bg);box-shadow:var(--gcyan)}
+    .btn-cyan:hover::before{transform:scaleX(1)}
+    .btn-red{color:var(--red);border:1px solid var(--red)}
+    .btn-red::before{background:var(--red)}
+    .btn-red:hover{color:#fff;box-shadow:var(--gred)}
+    .btn-red:hover::before{transform:scaleX(1)}
+    .btn-green{color:var(--green);border:1px solid var(--green)}
+    .btn-green::before{background:var(--green)}
+    .btn-green:hover{color:var(--bg);box-shadow:var(--ggreen)}
+    .btn-green:hover::before{transform:scaleX(1)}
+
+    /* ── PHOTO FRAME ── */
+    .photo-frame{position:relative;width:270px;height:330px;margin:0 auto;animation:fadeUp .9s .2s ease both}
+    .photo-frame::before{content:'';position:absolute;inset:-2px;background:linear-gradient(135deg,var(--cyan),var(--red),var(--green),var(--cyan));background-size:300% 300%;animation:bspin 3s linear infinite;border-radius:4px;z-index:0}
+    @keyframes bspin{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+    .photo-inner{position:relative;z-index:1;width:100%;height:100%;background:var(--bg3);border-radius:3px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+    .photo-inner img{width:100%;height:100%;object-fit:cover;display:block}
+    .photo-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6rem;color:var(--muted);font-family:'Orbitron',monospace;font-size:.58rem;letter-spacing:.1em;text-align:center;padding:1rem}
+    .photo-ph i{font-size:2.8rem;color:var(--cyan);opacity:.35}
+    .photo-ph small{opacity:.45;font-size:.5rem;line-height:1.6}
+    .pc{position:absolute;width:14px;height:14px;z-index:2}
+    .pc.tl{top:4px;left:4px;border-top:2px solid var(--cyan);border-left:2px solid var(--cyan)}
+    .pc.tr{top:4px;right:4px;border-top:2px solid var(--cyan);border-right:2px solid var(--cyan)}
+    .pc.bl{bottom:4px;left:4px;border-bottom:2px solid var(--cyan);border-left:2px solid var(--cyan)}
+    .pc.br{bottom:4px;right:4px;border-bottom:2px solid var(--cyan);border-right:2px solid var(--cyan)}
+    .photo-badge{position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--cyan);color:var(--cyan);font-family:'Orbitron',monospace;font-size:.56rem;font-weight:700;letter-spacing:.15em;padding:.3rem .9rem;white-space:nowrap;box-shadow:var(--gcyan)}
+
+    /* ── SECTION BASE ── */
+    section{padding:5.5rem 0;position:relative;z-index:2}
+    .sec-label{font-family:'Orbitron',monospace;font-size:.58rem;font-weight:700;letter-spacing:.25em;text-transform:uppercase;color:var(--cyan);text-shadow:var(--gcyan);margin-bottom:.4rem}
+    .sec-title{font-family:'Orbitron',monospace;font-size:clamp(1.5rem,3.2vw,2.5rem);font-weight:900;color:#fff;line-height:1.1}
+    .nd{width:55px;height:2px;background:linear-gradient(90deg,var(--cyan),transparent);box-shadow:var(--gcyan);margin:1.1rem 0 2rem}
+    .nd.red{background:linear-gradient(90deg,var(--red),transparent);box-shadow:var(--gred)}
+    .nd.green{background:linear-gradient(90deg,var(--green),transparent);box-shadow:var(--ggreen)}
+
+    /* ── ABOUT ── */
+    #about{background:var(--bg2)}
+    .about-text{font-size:.93rem;color:var(--text);line-height:1.85;font-weight:300}
+
+    /* identity cards */
+    .id-card{background:var(--bg3);border:1px solid var(--border);padding:1.4rem;position:relative;overflow:hidden;transition:border-color .3s,transform .3s;height:100%}
+    .id-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;transform:scaleX(0);transition:transform .4s}
+    .id-card.dev-card::before{background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+    .id-card.qa-card::before{background:linear-gradient(90deg,transparent,var(--red),transparent)}
+    .id-card:hover{transform:translateY(-5px)}
+    .id-card.dev-card:hover{border-color:rgba(0,229,255,.4)}
+    .id-card.qa-card:hover{border-color:rgba(255,45,85,.4)}
+    .id-card:hover::before{transform:scaleX(1)}
+    .id-icon{font-size:2rem;margin-bottom:.9rem}
+    .id-title{font-family:'Orbitron',monospace;font-size:.9rem;font-weight:700;color:#fff;margin-bottom:.5rem}
+    .id-desc{font-size:.82rem;color:var(--muted);line-height:1.7;font-weight:300}
+    .id-tags{margin-top:.9rem}
+    .id-tag{display:inline-block;font-size:.62rem;font-family:'Orbitron',monospace;letter-spacing:.08em;padding:.25rem .6rem;margin:.2rem;border:1px solid;border-radius:1px}
+    .dev-tag{color:var(--cyan);border-color:rgba(0,229,255,.3)}
+    .qa-tag{color:var(--red);border-color:rgba(255,45,85,.3)}
+
+    .stat-card{background:var(--bg3);border:1px solid var(--border);padding:1.1rem;text-align:center;position:relative;overflow:hidden;transition:border-color .3s,transform .3s}
+    .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);transform:scaleX(0);transition:transform .4s}
+    .stat-card:hover{border-color:var(--cyan);transform:translateY(-4px)}
+    .stat-card:hover::before{transform:scaleX(1)}
+    .stat-num{font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;color:var(--cyan);text-shadow:var(--gcyan)}
+    .stat-lbl{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:.15rem}
+
+    /* ── SKILLS — TWO COLUMNS ── */
+    #skills{background:var(--bg)}
+    .skill-col-head{font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;padding:.5rem 1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.6rem}
+    .skill-col-head.dev{color:var(--cyan);border-left:3px solid var(--cyan);background:rgba(0,229,255,.05)}
+    .skill-col-head.qa{color:var(--red);border-left:3px solid var(--red);background:rgba(255,45,85,.05)}
+    .skill-tag{display:inline-block;font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;letter-spacing:.08em;padding:.38rem .85rem;margin:.22rem;transition:all .25s;background:transparent;cursor:default}
+    .skill-tag.c{color:var(--cyan);border:1px solid rgba(0,229,255,.28)}
+    .skill-tag.c:hover{background:rgba(0,229,255,.08);border-color:var(--cyan);box-shadow:var(--gcyan);transform:translateY(-2px)}
+    .skill-tag.r{color:var(--red);border:1px solid rgba(255,45,85,.28)}
+    .skill-tag.r:hover{background:rgba(255,45,85,.08);border-color:var(--red);box-shadow:var(--gred);transform:translateY(-2px)}
+    .skill-tag.g{color:var(--green);border:1px solid rgba(0,255,136,.28)}
+    .skill-tag.g:hover{background:rgba(0,255,136,.08);border-color:var(--green);box-shadow:var(--ggreen);transform:translateY(-2px)}
+    .skill-tag.gold{color:var(--gold);border:1px solid rgba(255,201,77,.28)}
+    .skill-tag.gold:hover{background:rgba(255,201,77,.08);border-color:var(--gold);transform:translateY(-2px)}
+    .skill-sub{font-family:'Orbitron',monospace;font-size:.56rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:1.1rem 0 .5rem}
+
+    /* ── PROJECTS — TABBED ── */
+    #projects{background:var(--bg2)}
+    .proj-tabs{display:flex;gap:0;margin-bottom:2.5rem;border-bottom:1px solid var(--border)}
+    .proj-tab{font-family:'Orbitron',monospace;font-size:.62rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;padding:.7rem 1.4rem;border:none;background:transparent;cursor:pointer;transition:all .25s;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+    .proj-tab.active-dev{color:var(--cyan);border-bottom-color:var(--cyan);text-shadow:var(--gcyan)}
+    .proj-tab.active-qa{color:var(--red);border-bottom-color:var(--red);text-shadow:var(--gred)}
+    .proj-tab:not(.active-dev):not(.active-qa):hover{color:var(--text)}
+    .proj-pane{display:none}
+    .proj-pane.active{display:block}
+
+    .project-card{background:var(--bg3);border:1px solid var(--border);padding:1.6rem;height:100%;position:relative;overflow:hidden;transition:border-color .3s,transform .3s}
+    .project-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;transform:scaleX(0);transform-origin:left;transition:transform .4s}
+    .project-card.dev-proj::after{background:linear-gradient(90deg,var(--cyan),var(--green))}
+    .project-card.qa-proj::after{background:linear-gradient(90deg,var(--red),var(--gold))}
+    .project-card.dev-proj:hover{border-color:rgba(0,229,255,.35);transform:translateY(-5px)}
+    .project-card.qa-proj:hover{border-color:rgba(255,45,85,.35);transform:translateY(-5px)}
+    .project-card:hover::after{transform:scaleX(1)}
+    .proj-icon{font-size:2.2rem;margin-bottom:.9rem;filter:drop-shadow(0 0 8px rgba(0,229,255,.35))}
+    .proj-tag{font-family:'Orbitron',monospace;font-size:.54rem;letter-spacing:.15em;text-transform:uppercase;margin-bottom:.45rem}
+    .proj-name{font-family:'Orbitron',monospace;font-size:.92rem;font-weight:700;color:#fff;margin-bottom:.55rem}
+    .proj-desc{font-size:.8rem;color:var(--muted);line-height:1.65;font-weight:300}
+    .proj-links{margin-top:1.1rem}
+    .proj-links a{font-family:'Orbitron',monospace;font-size:.56rem;letter-spacing:.1em;font-weight:700;text-decoration:none;margin-right:.9rem;transition:text-shadow .2s}
+    .proj-links a.lc{color:var(--cyan)}
+    .proj-links a.lc:hover{text-shadow:var(--gcyan)}
+    .proj-links a.lr{color:var(--red)}
+    .proj-links a.lr:hover{text-shadow:var(--gred)}
+
+    /* ── VIDEOS ── */
+    #videos{background:var(--bg)}
+    .video-card{background:var(--bg3);border:1px solid var(--border);overflow:hidden;height:100%;transition:border-color .3s,transform .3s,box-shadow .3s}
+    .video-card:hover{border-color:var(--red);transform:translateY(-6px);box-shadow:0 0 28px rgba(255,45,85,.12)}
+    .yt-wrap{position:relative;width:100%;padding-top:56.25%;background:#000;overflow:hidden}
+    .yt-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:none}
+    .vinfo{padding:1rem 1.2rem 1.2rem}
+    .vgame{font-family:'Orbitron',monospace;font-size:.54rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--red);margin-bottom:.35rem}
+    .vtitle{font-family:'Orbitron',monospace;font-size:.78rem;font-weight:700;color:#fff;line-height:1.3;margin-bottom:.45rem}
+    .vdesc{font-size:.78rem;color:var(--muted);line-height:1.6;font-weight:300}
+    .vmeta{display:flex;gap:.9rem;margin-top:.7rem;font-size:.62rem;color:var(--muted);font-family:'Orbitron',monospace;letter-spacing:.05em;flex-wrap:wrap}
+    .vmeta span{display:flex;align-items:center;gap:.3rem}
+    .vmeta i{color:var(--cyan)}
+
+    /* ── CONTACT ── */
+    #contact{background:var(--bg2)}
+    .contact-input{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Exo 2',sans-serif;font-size:.88rem;padding:.82rem 1rem;width:100%;transition:border-color .3s,box-shadow .3s;margin-bottom:.9rem;outline:none}
+    .contact-input::placeholder{color:var(--muted)}
+    .contact-input:focus{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,229,255,.1)}
+    textarea.contact-input{min-height:120px;resize:vertical}
+    .cinfo{display:flex;align-items:center;gap:1rem;margin-bottom:1.3rem}
+    .cicon{width:40px;height:40px;flex-shrink:0;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--cyan);font-size:.95rem}
+    .cinfo span{font-size:.85rem;color:var(--muted)}
+    .soc{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border:1px solid var(--border);color:var(--muted);font-size:1rem;text-decoration:none;margin-right:.4rem;transition:all .25s}
+    .soc:hover{border-color:var(--cyan);color:var(--cyan);box-shadow:var(--gcyan)}
+
+    /* ── FOOTER ── */
+    footer{background:#040507;border-top:1px solid var(--border);text-align:center;padding:1.3rem;font-family:'Orbitron',monospace;font-size:.56rem;letter-spacing:.15em;color:var(--muted);z-index:2;position:relative}
+    footer span.c{color:var(--cyan)}
+    footer span.r{color:var(--red)}
+
+    /* ── REVEAL ── */
+    .reveal{opacity:0;transform:translateY(28px);transition:opacity .65s ease,transform .65s ease}
+    .reveal.visible{opacity:1;transform:translateY(0)}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+    .flicker{animation:flicker 6s infinite}
+    @keyframes flicker{0%,19%,21%,23%,25%,54%,56%,100%{opacity:1}20%,24%,55%{opacity:.4}}
+
+    /* code rain left decoration */
+    .code-rain{position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(to bottom,transparent,var(--cyan),transparent);opacity:.3;animation:rain 3s ease-in-out infinite}
+    @keyframes rain{0%,100%{opacity:.2;transform:scaleY(1)}50%{opacity:.6;transform:scaleY(1.1)}}
+
+    @media(max-width:768px){
+      .photo-frame{width:210px;height:260px;margin-top:2.5rem}
+      body{cursor:auto}
+      #cur,#cur-ring{display:none}
+      .proj-tab{font-size:.52rem;padding:.6rem .9rem}
+    }
+  </style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur-ring"></div>
+<canvas id="bgc"></canvas>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <!-- ✏️ EDIT 2: Change "YourName" in the navbar logo to your real name -->
+    <a class="navbar-brand flicker" href="#">&lt;<span>/</span>DEV OZ&gt;</a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#nm">
+      <i class="bi bi-list text-white fs-4"></i>
+    </button>
+    <div class="collapse navbar-collapse justify-content-end" id="nm">
+      <a class="nav-link" href="#about">About</a>
+      <a class="nav-link" href="#skills">Skills</a>
+      <a class="nav-link" href="#projects">Projects</a>
+      <a class="nav-link" href="#videos">Test Footage</a>
+      <a class="nav-link" href="#contact">Contact</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="grid-lines"></div>
+  <div class="container position-relative">
+    <div class="row align-items-center">
+      <div class="col-lg-7">
+        <div class="dual-badge">
+          <span class="badge-half dev">&#10094;/&#10095; Full-Stack Dev</span>
+          <span class="badge-half qa">&#9875; Game Tester</span>
+        </div>
+        <!-- ✏️ EDIT 3: Replace "YOUR NAME" in BOTH places below with your real name (keep them identical) -->
+        <h1 class="glitch" data-text="Sani Usman">Sani Usman</h1>
+        <div class="hero-roles">
+          <!-- ✏️ EDIT 4: Update your role titles if needed -->
+          <span class="r1">Python Developer</span>
+          <span class="sep">//</span>
+          <span class="r2">QA &amp; Game Tester</span>
+        </div>
+        <div class="tw">I build things. Then I break them on purpose.</div>
+        <p class="hero-sub">
+          <!-- ✏️ EDIT 5: Personalise this bio tagline -->
+          Full-stack developer specialising in Python &amp; web — and a dedicated game tester who catches what others miss. Two disciplines, one mindset == precision⭐.
+        </p>
+        <div class="hero-btns">
+          <!-- ✏️ EDIT 6: Replace YOUR_GITHUB_USERNAME with your actual GitHub username.
+               "My Dev Work" now opens your GitHub profile page directly in a new tab. -->
+          <a href="https://github.com/Dev-Oz1" target="_blank" class="btn-c btn-cyan">&#10094;/&#10095; My Dev Work</a>
+          <a href="#videos" class="btn-c btn-red">&#9875; Test Footage</a>
+          <a href="#contact" class="btn-c btn-green">&#9889; Hire Me</a>
+        </div>
+      </div>
+      <div class="col-lg-4 offset-lg-1 text-center">
+        <!--
+          ✏️ EDIT 7: ADD YOUR PHOTO
+          ══════════════════════════════════════════
+          STEP 1: Copy your photo into the same folder as index.html
+                  in PyCharm (e.g. name it "photo.jpg")
+          STEP 2: Delete the entire <div class="photo-ph">...</div> block below
+          STEP 3: Replace it with:
+                  <img src="photo.jpg" alt="Your Name"/>
+          ══════════════════════════════════════════
+        -->
+        <div class="photo-frame">
+          <div class="photo-inner">
+            <img src="photo.jpeg" alt="Sani Usman"/>
+          </div>
+          <div class="pc tl"></div><div class="pc tr"></div>
+          <div class="pc bl"></div><div class="pc br"></div>
+<!--          <div class="photo-badge">// PLAYER &amp; BUILDER</div>-->
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="container">
+    <div class="row align-items-start g-5">
+
+      <!-- bio -->
+      <div class="col-lg-5 reveal">
+        <p class="sec-label">&gt; WHO AM I</p>
+        <h2 class="sec-title">Two Skills.<br/>One Developer.</h2>
+        <div class="nd"></div>
+        <p class="about-text">
+          <!-- ✏️ EDIT 8: Replace "Your Name" and "Your City" with your real name and location -->
+          Hey, I'm <strong style="color:#fff">Sani Usman</strong> — a full-stack Python developer and game tester.<strong style="color:#fff"> </strong> I spend half my time building robust web applications and APIs, and the other half systematically dismantling games to find every edge-case bug before players do.
+        </p>
+        <p class="about-text mt-3">
+          <!-- ✏️ EDIT 9: Optionally personalise this paragraph with your own story -->
+          This rare combo means I write cleaner, more defensive code because I know exactly how systems break and I write better bug reports because I understand what caused them under the hood.
+        </p>
+        <div class="mt-4 d-flex gap-2 flex-wrap">
+          <!-- ✏️ EDIT 10: Replace "#" with a link to your CV file (upload CV.pdf to the same folder)
+               e.g. href="CV.pdf"   then GitHub link uses your username -->
+          <a href="CV.pdf" class="btn-c btn-cyan" style="font-size:.6rem;padding:.65rem 1.3rem"><i class="bi bi-download me-1"></i>Download CV</a>
+          <!-- ✏️ EDIT 11: Replace YOUR_GITHUB_USERNAME with your actual GitHub username -->
+          <a href="https://github.com/Dev-Oz1" target="_blank" class="btn-c btn-red" style="font-size:.6rem;padding:.65rem 1.3rem"><i class="bi bi-github me-1"></i>GitHub</a>
+        </div>
+      </div>
+
+      <!-- identity cards -->
+      <div class="col-lg-7 reveal">
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <div class="id-card dev-card">
+              <div class="id-icon">&#128187;</div>
+              <div class="id-title">Full-Stack Developer</div>
+              <p class="id-desc">Building web apps from backend APIs to polished frontends using Python, Flask/Django, and modern JS frameworks.</p>
+              <div class="id-tags">
+                <span class="id-tag dev-tag">Python</span>
+                <span class="id-tag dev-tag">Flask</span>
+                <span class="id-tag dev-tag">Django</span>
+                <span class="id-tag dev-tag">REST APIs</span>
+                <span class="id-tag dev-tag">PostgreSQL</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="id-card qa-card">
+              <div class="id-icon">&#127918;</div>
+              <div class="id-title">Game Tester / QA</div>
+              <p class="id-desc">Finding bugs across PC, console, and mobile platforms through systematic functional, regression, and exploratory testing.</p>
+              <div class="id-tags">
+                <span class="id-tag qa-tag">Jira</span>
+                <span class="id-tag qa-tag">TestRail</span>
+                <span class="id-tag qa-tag">OBS Studio</span>
+                <span class="id-tag qa-tag">Bug Reports</span>
+                <span class="id-tag qa-tag">QA Docs</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- ✏️ EDIT 12: Update your stats — years of experience, apps built, games tested, bugs filed -->
+        <div class="row g-2">
+          <div class="col-3"><div class="stat-card"><div class="stat-num">3+</div><div class="stat-lbl">Yrs Dev</div></div></div>
+          <div class="col-3"><div class="stat-card"><div class="stat-num">5+</div><div class="stat-lbl">Apps Built</div></div></div>
+          <div class="col-3"><div class="stat-card"><div class="stat-num">10+</div><div class="stat-lbl">Games QA'd</div></div></div>
+          <div class="col-3"><div class="stat-card"><div class="stat-num">50+</div><div class="stat-lbl">Bugs Filed</div></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section id="skills">
+  <div class="code-rain"></div>
+  <div class="container">
+    <div class="text-center mb-5 reveal">
+      <p class="sec-label">&gt; SKILL_TREE.json</p>
+      <h2 class="sec-title">Tech Stack &amp; Testing Arsenal</h2>
+      <div class="nd mx-auto"></div>
+    </div>
+    <div class="row g-4">
+
+      <!-- DEV SKILLS -->
+      <div class="col-lg-6 reveal">
+        <div class="skill-col-head dev"><i class="bi bi-code-slash"></i> Development Stack</div>
+
+        <div class="skill-sub">// Languages</div>
+        <span class="skill-tag c">Python</span>
+        <span class="skill-tag c">JavaScript</span>
+        <span class="skill-tag c">HTML5</span>
+        <span class="skill-tag c">CSS3</span>
+        <span class="skill-tag c">SQL</span>
+        <span class="skill-tag c">Bash</span>
+
+        <div class="skill-sub">// Frameworks & Libraries</div>
+        <span class="skill-tag g">Flask</span>
+<!--        <span class="skill-tag g">Django</span>-->
+        <span class="skill-tag g">FastAPI</span>
+        <span class="skill-tag g">Bootstrap</span>
+        <span class="skill-tag g">React</span>
+        <span class="skill-tag g">Tailwind CSS</span>
+
+        <div class="skill-sub">// Data & Backend</div>
+        <span class="skill-tag gold">PostgreSQL</span>
+        <span class="skill-tag gold">MySQL</span>
+        <span class="skill-tag gold">MongoDB</span>
+        <span class="skill-tag gold">Redis</span>
+        <span class="skill-tag gold">REST APIs</span>
+
+        <div class="skill-sub">// DevOps & Tools</div>
+        <span class="skill-tag c">Git &amp; GitHub</span>
+        <span class="skill-tag c">Docker</span>
+        <span class="skill-tag c">Linux</span>
+        <span class="skill-tag c">VS Code</span>
+        <span class="skill-tag c">Pycharm</span>
+      </div>
+
+      <!-- QA SKILLS -->
+      <div class="col-lg-6 reveal">
+        <div class="skill-col-head qa"><i class="bi bi-bug-fill"></i> QA &amp; Testing Arsenal</div>
+
+        <div class="skill-sub">// Testing Types</div>
+        <span class="skill-tag r">Functional Testing</span>
+        <span class="skill-tag r">Regression Testing</span>
+        <span class="skill-tag r">Exploratory Testing</span>
+        <span class="skill-tag r">Smoke Testing</span>
+        <span class="skill-tag r">Stress Testing</span>
+        <span class="skill-tag r">Multiplayer QA</span>
+        <span class="skill-tag r">Localisation QA</span>
+
+        <div class="skill-sub">// Platforms</div>
+        <span class="skill-tag r">PC / Steam</span>
+        <span class="skill-tag r">PlayStation</span>
+<!--        <span class="skill-tag r">Xbox</span>-->
+<!--        <span class="skill-tag r">Nintendo Switch</span>-->
+        <span class="skill-tag r">Android / iOS</span>
+
+        <div class="skill-sub">// QA Tools</div>
+        <span class="skill-tag gold">Jira</span>
+        <span class="skill-tag gold">TestRail</span>
+        <span class="skill-tag gold">TestMod</span>
+        <span class="skill-tag gold">OBS Studio</span>
+        <span class="skill-tag gold">DevTools</span>
+        <span class="skill-tag gold">Notion</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- PROJECTS — TABBED -->
+<section id="projects">
+  <div class="container">
+    <div class="text-center mb-4 reveal">
+      <p class="sec-label">&gt; PROJECT_LOG</p>
+      <h2 class="sec-title">Featured Work</h2>
+      <div class="nd mx-auto"></div>
+    </div>
+
+    <!-- TABS -->
+    <div class="proj-tabs reveal">
+      <button class="proj-tab active-dev" onclick="switchTab('dev',this)">&#10094;/&#10095; Dev Projects</button>
+      <button class="proj-tab" onclick="switchTab('qa',this)">&#9875; QA &amp; Game Testing</button>
+    </div>
+
+    <!-- DEV PROJECTS -->
+    <!--
+      ✏️ EDIT 13: DEV PROJECT CARDS
+      ══════════════════════════════════════════════════════════════
+      For EACH dev project card below, update:
+        • proj-tag   → your actual tech stack  e.g. "Python · Flask · PostgreSQL"
+        • proj-name  → your project name
+        • proj-desc  → 1–2 sentence description of what it does
+        • "Live Demo" href → your deployed app URL (or remove if none)
+        • "GitHub" href   → direct link to THAT project's repo
+                            e.g. https://github.com/YOUR_USERNAME/repo-name
+
+      HOW TO UPLOAD A PROJECT TO GITHUB (from PyCharm):
+        1. Open the project folder in PyCharm
+        2. Go to Git → Enable Version Control Integration → Git
+        3. Go to Git → GitHub → Share Project on GitHub
+        4. Give it a name and click Share — it creates the repo automatically
+        5. Copy the repo URL and paste it in the href below
+      ══════════════════════════════════════════════════════════════
+    -->
+    <div class="proj-pane active" id="pane-dev">
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-4 reveal">
+          <div class="project-card dev-proj">
+            <div class="proj-icon">&#127760;</div>
+            <div class="proj-tag" style="color:var(--cyan)">Python · Flask · PostgreSQL</div><!-- ✏️ your stack -->
+            <div class="proj-name">PortalAPI</div><!-- ✏️ your project name -->
+            <p class="proj-desc">A RESTful API backend with JWT authentication, rate limiting, and auto-generated Swagger docs. Deployed on Railway.</p><!-- ✏️ your description -->
+            <div class="proj-links">
+              <a href="https://your-live-demo.com" target="_blank" class="lc">Live Demo &#8599;</a><!-- ✏️ deployed URL or remove -->
+              <a href="https://github.com/YOUR_GITHUB_USERNAME/your-repo-name" target="_blank" class="lc">GitHub &#8599;</a><!-- ✏️ repo link -->
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4 reveal">
+          <div class="project-card dev-proj">
+            <div class="proj-icon">&#128202;</div>
+            <div class="proj-tag" style="color:var(--cyan)">Django · Chart.js · Redis</div><!-- ✏️ your stack -->
+            <div class="proj-name">MetricsDash</div><!-- ✏️ your project name -->
+            <p class="proj-desc">Real-time analytics dashboard with live charts, user role management, and CSV export. Serves 5k+ data points daily.</p><!-- ✏️ your description -->
+            <div class="proj-links">
+              <a href="https://your-live-demo.com" target="_blank" class="lc">Live Demo &#8599;</a><!-- ✏️ deployed URL or remove -->
+              <a href="https://github.com/YOUR_GITHUB_USERNAME/your-repo-name" target="_blank" class="lc">GitHub &#8599;</a><!-- ✏️ repo link -->
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4 reveal">
+          <div class="project-card dev-proj">
+            <div class="proj-icon">&#128717;</div>
+            <div class="proj-tag" style="color:var(--cyan)">Python · TypeScript · SQLite</div><!-- ✏️ your stack -->
+            <div class="proj-name">Mirai-Ai</div><!-- ✏️ your project name -->
+            <p class="proj-desc">AI-powered job application tracking system & Engine. Deployed on Railway.</p><!-- ✏️ your description -->
+            <div class="proj-links">
+              <a href="https://your-live-demo.com" target="_blank" class="lc">Live Demo &#8599;</a><!-- ✏️ deployed URL or remove -->
+              <a href="https://github.com/Dev-Oz1/mirai-ai" target="_blank" class="lc">GitHub &#8599;</a><!-- ✏️ repo link -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QA PROJECTS -->
+    <!--
+      ✏️ EDIT 14: QA PROJECT CARDS — same pattern as dev cards above.
+      Replace name, tag, description, and GitHub/case study links.
+    -->
+    <div class="proj-pane" id="pane-qa">
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-4 reveal">
+          <div class="project-card qa-proj">
+            <div class="proj-icon">&#128027;</div>
+            <div class="proj-tag" style="color:var(--red)">QA · Open Source Tool</div><!-- ✏️ your tag -->
+            <div class="proj-name">BugTrack CLI</div><!-- ✏️ your project name -->
+            <p class="proj-desc">Python CLI that auto-generates Jira-formatted bug reports from test session logs. Cuts reporting time by 30 min/session.</p><!-- ✏️ your description -->
+            <div class="proj-links">
+              <a href="https://your-live-demo.com" target="_blank" class="lr">Live Demo &#8599;</a><!-- ✏️ or remove -->
+              <a href="https://github.com/YOUR_GITHUB_USERNAME/your-repo-name" target="_blank" class="lr">GitHub &#8599;</a><!-- ✏️ repo link -->
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4 reveal">
+          <div class="project-card qa-proj">
+            <div class="proj-icon">&#128203;</div>
+            <div class="proj-tag" style="color:var(--red)">Automation · NLP</div><!-- ✏️ your tag -->
+            <div class="proj-name">TestCase Gen</div><!-- ✏️ your project name -->
+            <p class="proj-desc">Python script that parses game design docs and auto-generates structured test case templates using NLP techniques.</p><!-- ✏️ your description -->
+            <div class="proj-links">
+              <a href="https://your-live-demo.com" target="_blank" class="lr">Live Demo &#8599;</a><!-- ✏️ or remove -->
+              <a href="https://github.com/YOUR_GITHUB_USERNAME/your-repo-name" target="_blank" class="lr">GitHub &#8599;</a><!-- ✏️ repo link -->
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4 reveal">
+          <div class="project-card qa-proj">
+            <div class="proj-icon">&#127918;</div>
+            <div class="proj-tag" style="color:var(--red)">Game QA · Indie</div><!-- ✏️ your tag -->
+            <div class="proj-name">Indie Title QA</div><!-- ✏️ your project name -->
+            <p class="proj-desc">Full QA engagement on an indie platformer — 120+ bugs filed across 3 build cycles, spanning gameplay, UI, and audio.</p><!-- ✏️ your description -->
+            <div class="proj-links">
+              <a href="#" class="lr">Case Study &#8599;</a><!-- ✏️ link to a PDF/doc write-up if you have one -->
+              <a href="https://github.com/YOUR_GITHUB_USERNAME/your-repo-name" target="_blank" class="lr">GitHub &#8599;</a><!-- ✏️ repo link -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- VIDEOS -->
+<section id="videos">
+  <div class="container">
+    <div class="text-center mb-5 reveal">
+      <p class="sec-label">&gt; TEST_FOOTAGE.mp4</p>
+      <h2 class="sec-title">Game Test Videos</h2>
+      <div class="nd red mx-auto"></div>
+      <p style="color:var(--muted);font-size:.83rem;max-width:480px;margin:0 auto;font-weight:300;line-height:1.7">
+        Real test sessions captured live - bug discovery, reproduction steps, and platform coverage documented on camera.
+      </p>
+    </div>
+
+    <p class="skill-sub reveal" style="margin-top:0">// Main Case Studies</p>
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-4 reveal"><div class="video-card"><div class="yt-wrap"><!-- Upload file: neon-sidescroller-collision-hitbox.mp4 --><iframe src="https://youtu.be/50pAq6UOhg8" title="Test Video 1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div><div class="vinfo"><div class="vgame">&#9876; Neon Side-Scroller QA</div><div class="vtitle">neon-sidescroller-collision-hitbox</div><p class="vdesc">Focused reproduction pass in a side-scroller combat room. Captures repeated movement and timing checks to validate a collision/hitbox issue and confirm consistent repro steps.</p><div class="vmeta"><span><i class="bi bi-bug-fill"></i> 1 Critical Bug</span><span><i class="bi bi-clock-fill"></i> 00:45</span><span><i class="bi bi-display"></i> PC</span></div></div></div></div>
+      <div class="col-md-6 col-lg-4 reveal"><div class="video-card"><div class="yt-wrap"><!-- Upload file: neon-sidescroller-settings-flow.mp4 --><iframe src="https://youtu.be/lH0OHsSfdFc" title="Test Video 2" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div><div class="vinfo"><div class="vgame">&#127918; Neon Side-Scroller QA</div><div class="vtitle">neon-sidescroller-settings-flow</div><p class="vdesc">Session starts in active gameplay, then transitions into options/settings validation to confirm menu behavior and stable state changes.</p><div class="vmeta"><span><i class="bi bi-bug-fill"></i> 2 Bugs</span><span><i class="bi bi-clock-fill"></i> 01:14</span><span><i class="bi bi-display"></i> PC</span></div></div></div></div>
+      <div class="col-md-6 col-lg-4 reveal"><div class="video-card"><div class="yt-wrap"><!-- Upload file: neon-sidescroller-corridor-regression.mp4 --><iframe src="https://youtu.be/gJJWBE47vak" title="Test Video 3" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div><div class="vinfo"><div class="vgame">&#128241; Neon Side-Scroller QA</div><div class="vtitle">neon-sidescroller-corridor-regression</div><p class="vdesc">Regression retest in a low-visibility corridor with repeated route attempts to reproduce a traversal/trigger fault.</p><div class="vmeta"><span><i class="bi bi-bug-fill"></i> 1 Regression Bug</span><span><i class="bi bi-clock-fill"></i> 00:38</span><span><i class="bi bi-display"></i> PC</span></div></div></div></div>
+      <div class="col-md-6 col-lg-4 reveal"><div class="video-card"><div class="yt-wrap"><!-- Upload file: grime2-area-interaction-bug.mp4 --><iframe src="https://youtu.be/pXOpgHddBA0" title="Test Video 4" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div><div class="vinfo"><div class="vgame">&#9875; GRIME 2</div><div class="vtitle">grime2-area-interaction-bug</div><p class="vdesc">Raw gameplay capture showing repeated interaction attempts in the same zone to isolate and reproduce the reported issue.</p><div class="vmeta"><span><i class="bi bi-bug-fill"></i> 1 Critical Bug</span><span><i class="bi bi-clock-fill"></i> 00:30</span><span><i class="bi bi-display"></i> PC</span></div></div></div></div>
+    </div>
+
+    <div class="text-center mt-5 reveal">
+      <a href="https://www.youtube.com/@saniusman7673" target="_blank" class="btn-c btn-red">
+        <i class="bi bi-youtube me-2"></i> All Videos on YouTube
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="container">
+    <div class="row g-5">
+      <div class="col-lg-5 reveal">
+        <p class="sec-label">&gt; CONNECT.init()</p>
+        <h2 class="sec-title">Let's Work Together</h2>
+        <div class="nd green"></div>
+        <p style="color:var(--muted);font-size:.86rem;line-height:1.85;font-weight:300;margin-bottom:1.8rem">
+          Open to full-stack dev contracts, Python projects, game QA roles, and freelance work. Remote-friendly worldwide.
+        </p>
+        <!-- ✏️ EDIT 17: Replace "hello@yourname.com" with your real email -->
+        <div class="cinfo"><div class="cicon"><i class="bi bi-envelope-fill"></i></div><span>elmuhammaden.sani@gmail.com</span></div>
+        <!-- ✏️ EDIT 18: Replace with your actual city and country -->
+        <div class="cinfo"><div class="cicon"><i class="bi bi-geo-alt-fill"></i></div><span>Worldwide (Remote)</span></div>
+        <div class="cinfo"><div class="cicon"><i class="bi bi-controller"></i></div><span>Available for Remote QA &amp; Dev Work</span></div>
+        <div class="mt-4">
+          <!-- ✏️ EDIT 19: Replace each placeholder with your real social profile URLs -->
+          <a href="https://github.com/Dev-Oz1" target="_blank" class="soc"><i class="bi bi-github"></i></a>
+          <a href="www.linkedin.com/in/sani-muhammad-95a523169" target="_blank" class="soc"><i class="bi bi-linkedin"></i></a>
+          <a href="https://www.youtube.com/@saniusman7673" target="_blank" class="soc"><i class="bi bi-youtube"></i></a>
+          <a href="https://discord.com/users/.dr_oz" target="_blank" class="soc"><i class="bi bi-discord"></i></a>
+          <a href="https://x.com/Jinsai_1?s=09" target="_blank" class="soc"><i class="bi bi-twitter-x"></i></a>
+        </div>
+      </div>
+      <div class="col-lg-6 offset-lg-1 reveal">
+        <div class="row g-0">
+          <div class="col-md-6 pe-md-2"><input class="contact-input" type="text" placeholder="Your Name"/></div>
+          <div class="col-md-6 ps-md-2"><input class="contact-input" type="email" placeholder="elmuhammaden.sani@gmail.com"/></div>
+        </div>
+        <input class="contact-input" type="text" placeholder="Subject (e.g. Dev Contract / QA Role)"/>
+        <textarea class="contact-input" placeholder="Tell me about the project or role..."></textarea>
+        <button class="btn-c btn-green" style="width:100%;text-align:center;font-size:.65rem;">
+          TRANSMIT MESSAGE <i class="bi bi-send-fill ms-2"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <!-- ✏️ EDIT 20: Replace "YOUR NAME" with your real name -->
+  <p>&#169; 2026 <span class="c">Sani Usman</span> &mdash; <span class="r">FULL-STACK DEV</span> &amp; <span class="c">GAME TESTER</span> &mdash; BUILT WITH HTML &amp; BOOTSTRAP</p>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // CURSOR
+  const cur = document.getElementById('cur');
+  const ring = document.getElementById('cur-ring');
+  document.addEventListener('mousemove', e => {
+    cur.style.left = e.clientX + 'px'; cur.style.top = e.clientY + 'px';
+    setTimeout(() => { ring.style.left = e.clientX + 'px'; ring.style.top = e.clientY + 'px'; }, 80);
+  });
+  document.querySelectorAll('a,button,.skill-tag,.video-card,.project-card,.stat-card,.id-card').forEach(el => {
+    el.addEventListener('mouseenter', () => { cur.style.transform='translate(-50%,-50%) scale(2)'; cur.style.background='var(--red)'; ring.style.width='54px'; ring.style.height='54px'; });
+    el.addEventListener('mouseleave', () => { cur.style.transform='translate(-50%,-50%) scale(1)'; cur.style.background='var(--cyan)'; ring.style.width='32px'; ring.style.height='32px'; });
+  });
+
+  // PARTICLES
+  const canvas = document.getElementById('bgc');
+  const ctx = canvas.getContext('2d');
+  function resize(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+  const colors = ['#00e5ff','#ff2d55','#00ff88'];
+  const pts = Array.from({length:100}, () => ({
+    x: Math.random()*canvas.width, y: Math.random()*canvas.height,
+    r: Math.random()*1.4+.3, dx:(Math.random()-.5)*.45, dy:(Math.random()-.5)*.45,
+    color: colors[Math.floor(Math.random()*3)], alpha: Math.random()*.55+.15
+  }));
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    pts.forEach(p => {
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=p.color; ctx.globalAlpha=p.alpha; ctx.fill();
+      p.x+=p.dx; p.y+=p.dy;
+      if(p.x<0||p.x>canvas.width) p.dx*=-1;
+      if(p.y<0||p.y>canvas.height) p.dy*=-1;
+    });
+    ctx.globalAlpha=1;
+    for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++){
+      const d=Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y);
+      if(d<95){ ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y);
+        ctx.strokeStyle='#00e5ff'; ctx.globalAlpha=(1-d/95)*.1; ctx.lineWidth=.5; ctx.stroke(); }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+  // SCROLL REVEAL
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach((e,i) => { if(e.isIntersecting){ setTimeout(()=>e.target.classList.add('visible'),i*90); obs.unobserve(e.target); } });
+  },{threshold:.1});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+  // PROJECT TABS
+  function switchTab(type, btn){
+    document.querySelectorAll('.proj-pane').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.proj-tab').forEach(t=>t.classList.remove('active-dev','active-qa'));
+    document.getElementById('pane-'+type).classList.add('active');
+    btn.classList.add(type==='dev' ? 'active-dev' : 'active-qa');
+  }
+</script>
+</body>
+</html>
+
